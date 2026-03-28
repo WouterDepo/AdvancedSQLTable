@@ -42,6 +42,8 @@ Un CWC è un componente web incapsulato che può essere:
 - **Interagisce** con tag e script
 
 ### **Architettura:**
+
+```
 ┌─────────────────────────────────────┐
 │ TIA Portal (Engineering)            │
 │ ┌───────────────────────────────┐   │
@@ -62,6 +64,7 @@ Un CWC è un componente web incapsulato che può essere:
 │ WinCC Unified Runtime               │
 │ (Panel / PC)                        │
 └─────────────────────────────────────┘
+```
 
 ---
 
