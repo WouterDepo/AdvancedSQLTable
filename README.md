@@ -1,6 +1,6 @@
 # Custom Web Controls (CWC) Development Guide
 
-Guida completa allo sviluppo di Custom Web Controls per SIMATIC WinCC Unified.
+Guida allo sviluppo di Custom Web Controls per SIMATIC WinCC Unified.
 
 ---
 
@@ -43,24 +43,24 @@ Un CWC è un componente web incapsulato che può essere:
 
 ### **Architettura:**
 ┌─────────────────────────────────────┐
-│ TIA Portal (Engineering) │
-│ ┌───────────────────────────────┐ │
-│ │ Custom Web Control (CWC) │ │
-│ │ ┌─────────────────────────┐ │ │
-│ │ │ HTML + CSS + JS │ │ │
-│ │ │ (Librerie esterne) │ │ │
-│ │ └─────────────────────────┘ │ │
-│ │ ↕ API │ │
-│ │ ┌─────────────────────────┐ │ │
-│ │ │ Properties | Events │ │ │
-│ │ │ Methods │ │ │
-│ │ └─────────────────────────┘ │ │
-│ └───────────────────────────────┘ │
+│ TIA Portal (Engineering)            │
+│ ┌───────────────────────────────┐   │
+│ │ Custom Web Control (CWC)      │   │
+│ │ ┌─────────────────────────┐   │   │
+│ │ │ HTML + CSS + JS         │   │   │
+│ │ │ (Librerie esterne)      │   │   │
+│ │ └─────────────────────────┘   │   │
+│ │ ↕ API                         │   │
+│ │ ┌─────────────────────────┐   │   │
+│ │ │ Properties | Events     │   │   │
+│ │ │ Methods                 │   │   │
+│ │ └─────────────────────────┘   │   │
+│ └───────────────────────────────┘   │
 └─────────────────────────────────────┘
 ↓ Runtime
 ┌─────────────────────────────────────┐
-│ WinCC Unified Runtime │
-│ (Panel / PC) │
+│ WinCC Unified Runtime               │
+│ (Panel / PC)                        │
 └─────────────────────────────────────┘
 
 ---
