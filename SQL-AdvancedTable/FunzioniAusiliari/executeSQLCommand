@@ -1,0 +1,63 @@
+//funzione asincrono ancora da debuggare per esecuzione commandi
+// parametri sono : "query" e "connectionString"
+export async function executeSQLCommand(query, connectionString) {
+//per INSERT, UPDATE, DELETE
+let conn = null;
+    
+    try {
+        HMIRuntime.Trace('>>> □□ Esecuzione comando SQL...');
+        HMIRuntime.Trace('>>> SQL: ' + query.substring(0, 150) + '...');
+        
+        // 1️⃣ APRI CONNESSIONE
+        const connStr = connectionString || DB_CONFIG[DB_CONFIG.default];
+        conn = await HMIRuntime.Database.CreateConnection(connStr);
+        HMIRuntime.Trace('>>> □ Connessione aperta');
+        
+        // 2️⃣ ESEGUI COMANDO
+        const results = await conn.Execute(query);
+        
+        // 3️⃣ CHIUDI CONNESSIONE
+        await conn.Close();
+        HMIRuntime.Trace('>>> □ Comando eseguito con successo');
+        HMIRuntime.Trace('>>> □□ Connessione chiusa');
+        conn = null;
+        
+        return {
+            success: true,
+            results: results
+        };
+        
+    } catch (error) {
+        HMIRuntime.Trace('>>> □ ERRORE esecuzione comando: ' + error.message);
+        
+        // Gestione errori dettagliata SQL
+        if (error.Results) {
+            const res = error.Results;
+            for (let statement in res) {
+                const errors = res[statement].Errors;
+                if (errors) {
+                    for (let i in errors) {
+                        const detailed = errors[i];
+                        HMIRuntime.Trace('>>> □□ Errore SQL: ' + JSON.stringify(detailed));
+                    }
+                }
+            }
+        }
+        
+        return {
+            success: false,
+            error: error.message || error.toString()
+        };
+        
+    } finally {
+        // □□️ SICUREZZA: Chiudi connessione anche in caso di errore
+        if (conn) {
+            try {
+                await conn.Close();
+                HMIRuntime.Trace('>>> □□ Connessione chiusa (finally)');
+            } catch (closeError) {
+                HMIRuntime.Trace('>>> □️ Errore chiusura connessione: ' + closeError.message);
+            }
+        }
+    }
+}

@@ -1,0 +1,130 @@
+{
+	"$schema": "./CWC_manifest_Schema.json",
+	"mver": "1.2.0",
+	"control": {
+		"identity": {
+			"name": "AdvancedTableCwc",
+			"version": "1.0",
+			"displayname": "Advanced Table CustomWebControl",
+			"icon": "./assets/siemens.ico",
+			"type": "guid://9D4B862A-3C77-4698-8537-0F955761B15C",
+			"start": "./control/index.html"
+		},
+		"metadata": {
+			"author": "Siemens",
+			"keywords": [
+				"Template",
+				"Table",
+				"Advanced"
+			]
+		},
+		"contracts": {
+			"api": {
+				"methods": {
+					"DrawTable": {
+						"parameters": {
+							"columStyleString": {
+								"type": "string"
+							},
+							"tableDataString": {
+								"type": "string"
+							}
+						},
+						"description": "Manual way to draw the Table"
+					},
+					"SetFilter": {
+						"parameters": {
+							"filters": {
+								"type": "string"
+							}
+						},
+						"description": "set a filter via unified"
+					},
+					"AddFilter": {
+						"parameters": {
+							"filters": {
+								"type": "string"
+							}
+						},
+						"description": "add a filter via unified"
+					},
+					"ClearFilter": {
+						"description": "reset all filters via unified"
+					},
+					"Download": {
+						"parameters": {
+							"type": {
+								"type": "string"
+							},
+							"filename": {
+								"type": "string"
+							},
+							"option": {
+								"type": "string"
+							}
+						},
+						"description": "download actual table"
+					},
+					"ChangeStyle": {
+						"parameters": {
+							"style": {
+								"type": "string"
+							}
+						},
+						"description": "change css style of table"
+					},
+					"ClearTable": {
+						"description": "clear all table data and columns"
+					}
+				},
+				"events": {
+					"CellEdited":{
+						"arguments": {
+							"rowData": {
+								"type": "string"
+							}
+						}
+					},
+					"Clicked":{
+						"arguments": {
+							"rowData": {
+								"type": "string"
+							}
+						}
+					}
+				},
+				"properties": {
+					"TableDataString": {
+						"type": "string",
+						"default": "[{\"name\":\"jj\",\"salary\":\"3300\"}]"
+					},
+					"ColumnStyleString" :{
+						"type": "string",
+						"default": "[{\"title\":\"Name\", \"field\":\"name\", \"sorter\":\"string\", \"width\":150},{\"title\":\"Salary\", \"field\":\"salary\", \"sorter\":\"number\", \"hozAlign\":\"left\", \"editor\":\"true\"}]"
+					},
+					"NrEdited" :{
+						"type": "number",
+						"default": "-1"
+					},
+					"RowDataEdited" :{
+						"type": "string",
+						"default": "0"
+					},
+					"DefFilter" :{
+						"type": "string",
+						"default": "{\"field\":\"nr\",\"type\":\">=\",\"value\":\"1\"}"
+					},
+					"ShowExtFilter" :{
+						"type": "number",
+						"default": 1
+					},
+					"TableStyle" :{
+						"type": "string",
+						"default": "./dist/css/tabulator.min.css"
+					}
+				}
+			}
+		},
+		"types": {}
+	}
+}

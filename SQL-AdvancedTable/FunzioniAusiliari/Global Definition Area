@@ -1,0 +1,60 @@
+// ============================================
+// CONFIGURAZIONE DATABASE
+// ============================================
+const DB_CONFIG = {
+    mssql: "Driver=ODBC Driver 17 for SQL Server;Server=YOUR_SERVER\\WINCCUNIFIED;Database=YOUR_DB;trusted_connection=yes;",
+    sqlite: "Driver=SQLite3 ODBC Driver;Database=C:\\ProgramData\\YourDB.db3;trusted_connection=yes;",
+    sqlDSN: "FILEDSN=C:\\Users\\Public\\prova_esea.dsn",
+    default: "sqlDSN"
+};
+
+// ============================================
+// FUNZIONI INTERNE
+// ============================================
+function isDateField(fieldName, value) {
+    const dateKeywords = /date|dt|time|timestamp|datetime|_at$/i;
+    if (dateKeywords.test(fieldName)) return true;
+    
+    if (typeof value === 'string') {
+        const isoDateRegex = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}/;
+        return isoDateRegex.test(value);
+    }
+    
+    return false;
+}
+
+function formatDateTime(isoString, format = 'dd/MM/yyyy HH:mm:ss', nullPlaceholder = '—') {
+    if (!isoString) return nullPlaceholder;
+    
+    try {
+        const date = new Date(isoString);
+        if (isNaN(date.getTime())) return nullPlaceholder;
+        
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        
+        return format
+            .replace('dd', day)
+            .replace('MM', month)
+            .replace('yyyy', year)
+            .replace('HH', hours)
+            .replace('mm', minutes)
+            .replace('ss', seconds);
+            
+    } catch (error) {
+        return nullPlaceholder;
+    }
+}
+
+function formatNumber(value, decimals = 2, nullPlaceholder = '—') {
+    if (value === null || value === undefined || isNaN(value)) {
+        return nullPlaceholder;
+    }
+    return Number(value).toFixed(decimals);
+}
+
+

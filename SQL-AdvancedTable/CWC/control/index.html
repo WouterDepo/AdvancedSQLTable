@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang='en' style="height: 100%;">
+
+<head>
+	<meta charset='utf-8'>
+	<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+
+	<script src='webcc.min.js'></script> <!-- mandatory dependency -->
+	<!--Tabulator-->
+	<script type="text/javascript" src="./dist/js/tabulator.min.js"></script>
+
+	<link id="tabulatorStyle" href="./dist/css/tabulator.min.css" rel="stylesheet">
+
+</head>
+
+<body style="height: 100%; margin: 0;">
+	<div id="divFilter">
+		<select id="filter-field1">
+		</select>
+
+		<select id="filter-type1">
+			<option value="=">=</option>
+			<option value="<"><</option>
+			<option value="<="><=</option>
+			<option value=">">></option>
+			<option value=">=">>=</option>
+			<option value="!=">!=</option>
+			<option value="like">like</option>
+			<option value="starts">starts</option>
+			<option value="ends">ends</option>
+			<option value="regex">regex</option>
+		</select>
+
+  		<input id="filter-value1" type="text" placeholder="value to filter">
+		
+		<button id="now1" onclick="getDate(1)">now</button>
+
+		<select id="filter-field2">
+		</select>
+
+		<select id="filter-type2">
+			<option value="=">=</option>
+			<option value="<"><</option>
+			<option value="<="><=</option>
+			<option value=">">></option>
+			<option value=">=">>=</option>
+			<option value="!=">!=</option>
+			<option value="like">like</option>
+			<option value="starts">starts</option>
+			<option value="ends">ends</option>
+			<option value="regex">regex</option>
+		</select>
+
+  		<input id="filter-value2" type="text" placeholder="value to filter">
+		<button id="now2" onclick="getDate(2)">now</button>
+  		<button id="filter-clear">Clear Filter</button>
+	</div>
+	<div id="example-table"></div>
+	<script src='./code.js'></script>
+</body>
+
+</html>

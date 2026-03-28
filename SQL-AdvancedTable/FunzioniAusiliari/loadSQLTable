@@ -1,0 +1,238 @@
+export async function loadSQLTable(config) {
+    const {
+        query,
+        columns,
+        tableElementId,
+        formatters = {},
+        options = {},
+        connectionString = null
+    } = config;
+    
+    // Opzioni di default
+    const opts = {
+        autoFormatDates: true,
+        autoFormatNumbers: true,
+        dateFormat: 'dd/MM/yyyy HH:mm:ss',
+        numberDecimals: 2,
+        nullPlaceholder: '—',
+        onSuccess: null,
+        onError: null,
+        ...options
+    };
+    
+    let conn = null;
+    
+    try {
+        // Apri connessione
+        const connStr = connectionString || DB_CONFIG[DB_CONFIG.default];
+        conn = await HMIRuntime.Database.CreateConnection(connStr);
+        
+        // Esegui query
+        const results = await conn.Execute(query);
+        
+        if (!results || !results.Results) {
+            throw new Error('Nessun risultato dalla query');
+        }
+        
+        // Processa risultati
+        const tableData = [];
+        const statements = results.Results;
+        
+        for (let statement in statements) {
+            const rows = statements[statement].Rows;
+            
+            if (!rows) continue;
+            
+            for (let i in rows) {
+                const row = rows[i];
+                const rowObj = {};
+                
+                for (let key in row) {
+                    let value = row[key];
+                    
+                    // Applica formatter custom
+                    if (formatters[key]) {
+                        value = formatters[key](value, row);
+                    }
+                    // Auto-formattazione date
+                    else if (opts.autoFormatDates && isDateField(key, value)) {
+                        value = formatDateTime(value, opts.dateFormat, opts.nullPlaceholder);
+                    }
+                    // Auto-formattazione numeri
+                    else if (opts.autoFormatNumbers && typeof value === 'number') {
+                        value = formatNumber(value, opts.numberDecimals, opts.nullPlaceholder);
+                    }
+                    // Gestione null
+                    else if (value === null || value === undefined) {
+                        value = opts.nullPlaceholder;
+                    }
+                    
+                    rowObj[key] = value;
+                }
+                
+                tableData.push(rowObj);
+            }
+        }
+        
+        // Popola tabella CWC
+        const tableElement = Screen.Items(tableElementId);
+        
+        if (!tableElement) {
+            throw new Error('Elemento "' + tableElementId + '" non trovato');
+        }
+        
+        // Converti formato colonne
+        const columnStyleCWC = columns.map(col => ({
+            title: col.headerName || col.field,
+            field: col.field,
+            sorter: col.sorter || "string",
+            width: col.width || 100,
+            ...(col.hozAlign && { hozAlign: col.hozAlign })
+        }));
+        
+        // Svuota e ripopola (fix rendering bug)
+        tableElement.Properties.TableDataString = '[]';
+        tableElement.Properties.ColumnStyleString = '[]';
+        tableElement.Properties.ColumnStyleString = JSON.stringify(columnStyleCWC);
+        tableElement.Properties.TableDataString = JSON.stringify(tableData);
+        
+        // Chiudi connessione
+        await conn.Close();
+        conn = null;
+        
+        const resultInfo = {
+            success: true,
+            rowCount: tableData.length,
+            data: tableData
+        };
+        
+        if (opts.onSuccess) {
+            opts.onSuccess(resultInfo);
+        }
+        
+        return resultInfo;
+        
+    } catch (error) {
+        let errorMessage = 'Errore sconosciuto';
+        let isRealError = false;
+        
+        // Gestione errori SQL
+        if (error.Results) {
+            const res = error.Results;
+            
+            for (let statement in res) {
+                const errors = res[statement].Errors;
+                
+                if (errors) {
+                    for (let i in errors) {
+                        const detailed = errors[i];
+                        const state = detailed.State || '';
+                        
+                        // State "00000" = Successo
+                        if (state !== '00000' && state !== '') {
+                            isRealError = true;
+                            errorMessage = detailed.Message;
+                        }
+                    }
+                }
+            }
+            
+            // Se non è un errore reale, prova a processare i risultati
+            if (!isRealError) {
+                const tableData = [];
+                
+                for (let statement in res) {
+                    const rows = res[statement].Rows;
+                    
+                    if (rows) {
+                        for (let rowKey in rows) {
+                            const row = rows[rowKey];
+                            const rowObj = {};
+                            
+                            for (let key in row) {
+                                let value = row[key];
+                                
+                                if (formatters[key]) {
+                                    value = formatters[key](value, row);
+                                } else if (opts.autoFormatDates && isDateField(key, value)) {
+                                    value = formatDateTime(value, opts.dateFormat, opts.nullPlaceholder);
+                                } else if (opts.autoFormatNumbers && typeof value === 'number') {
+                                    value = formatNumber(value, opts.numberDecimals, opts.nullPlaceholder);
+                                } else if (value === null || value === undefined) {
+                                    value = opts.nullPlaceholder;
+                                }
+                                
+                                rowObj[key] = value;
+                            }
+                            
+                            tableData.push(rowObj);
+                        }
+                        
+                        // Popola tabella
+                        const tableElement = Screen.Items(tableElementId);
+                        
+                        if (tableElement) {
+                            const columnStyleCWC = columns.map(col => ({
+                                title: col.headerName || col.field,
+                                field: col.field,
+                                sorter: col.sorter || "string",
+                                width: col.width || 100,
+                                ...(col.hozAlign && { hozAlign: col.hozAlign })
+                            }));
+                            
+                            tableElement.Properties.ColumnStyleString = JSON.stringify(columnStyleCWC);
+                            tableElement.Properties.TableDataString = JSON.stringify(tableData);
+                            
+                            if (opts.onSuccess) {
+                                opts.onSuccess({
+                                    success: true,
+                                    rowCount: tableData.length,
+                                    data: tableData
+                                });
+                            }
+                            
+                            return {
+                                success: true,
+                                rowCount: tableData.length,
+                                data: tableData
+                            };
+                        }
+                    }
+                }
+            }
+        } else {
+            try {
+                errorMessage = error.toString();
+                isRealError = true;
+            } catch (e) {
+                errorMessage = 'Errore durante conversione errore';
+                isRealError = true;
+            }
+        }
+        
+        // Ritorna errore
+        if (isRealError) {
+            const errorInfo = {
+                success: false,
+                error: errorMessage,
+                query: query
+            };
+            
+            if (opts.onError) {
+                opts.onError(errorInfo);
+            }
+            
+            return errorInfo;
+        }
+        
+    } finally {
+        // Chiudi connessione (sicurezza)
+        if (conn) {
+            try {
+                await conn.Close();
+            } catch (closeError) {
+                // Ignora errori di chiusura
+            }
+        }
+    }
+}
