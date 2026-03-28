@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="it" style="height: 100%;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Trend Configuration Table</title>
+    
+    <!-- ========================================== -->
+    <!-- Tabulator CSS - LOCALE                     -->
+    <!-- ========================================== -->
+    <link href="./dist/css/tabulator.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Custom Styles -->
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #f5f5f5 !important;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        #trend-config-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* ========================================== */
+        /* LOADING STATE                              */
+        /* ========================================== */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.3s ease-out;
+        }
+        
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loading-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            margin-top: 20px;
+            color: #667eea;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        /* ========================================== */
+        /* TOOLBAR                                    */
+        /* ========================================== */
+        .toolbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 12px 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+        
+        .toolbar button {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: white;
+        }
+        
+        .btn-add {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-add:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-delete {
+            background: rgba(220, 53, 69, 0.8);
+        }
+        
+        .btn-delete:hover {
+            background: rgba(220, 53, 69, 1);
+        }
+        
+        .btn-clear {
+            background: rgba(108, 117, 125, 0.8);
+        }
+        
+        .btn-clear:hover {
+            background: rgba(108, 117, 125, 1);
+        }
+        
+        .btn-import {
+            background: rgba(40, 167, 69, 0.8);
+        }
+        
+        .btn-import:hover {
+            background: rgba(40, 167, 69, 1);
+        }
+        
+        .btn-export {
+            background: rgba(0, 123, 255, 0.8);
+        }
+        
+        .btn-export:hover {
+            background: rgba(0, 123, 255, 1);
+        }
+        
+        .toolbar .spacer {
+            flex: 1;
+        }
+        
+        .toolbar .stats {
+            font-size: 12px;
+            color: white;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 6px 12px;
+            border-radius: 4px;
+        }
+        
+        /* ========================================== */
+        /* AUTOCOMPLETE SECTION                       */
+        /* ========================================== */
+        .autocomplete-section {
+            background: white;
+            padding: 15px;
+            border-bottom: 2px solid #dee2e6;
+            flex-shrink: 0;
+        }
+        
+        .autocomplete-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .autocomplete-header h3 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .autocomplete-container {
+            position: relative;
+            width: 100%;
+        }
+        
+        .autocomplete-input {
+            width: 100%;
+            padding: 10px 40px 10px 40px;
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            color: #495057;
+            font-size: 14px;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+        
+        .autocomplete-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .autocomplete-input::placeholder {
+            color: #adb5bd;
+        }
+        
+        .autocomplete-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 16px;
+            pointer-events: none;
+        }
+        
+        .autocomplete-clear {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            font-size: 12px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+        
+        .autocomplete-clear:hover {
+            background: #c82333;
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .autocomplete-clear.visible {
+            display: flex;
+        }
+        
+        /* ========================================== */
+        /* AUTOCOMPLETE DROPDOWN                      */
+        /* ========================================== */
+        .autocomplete-dropdown {
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            max-height: 280px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+        }
+        
+        .autocomplete-dropdown.visible {
+            display: block;
+        }
+        
+        .autocomplete-count {
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            color: #6c757d;
+            font-size: 11px;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        
+        .autocomplete-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f3f5;
+            transition: all 0.15s;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+        
+        .autocomplete-item:hover,
+        .autocomplete-item.selected {
+            background: #e7f3ff;
+        }
+        
+        .autocomplete-item.selected {
+            border-left: 3px solid #667eea;
+        }
+        
+        .autocomplete-item-tag {
+            font-weight: 600;
+            color: #495057;
+            font-size: 13px;
+        }
+        
+        .autocomplete-item-desc {
+            color: #6c757d;
+            font-size: 11px;
+        }
+        
+        .autocomplete-item-unit {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        
+        .autocomplete-no-results {
+            padding: 30px 20px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 13px;
+        }
+        
+        /* ========================================== */
+        /* KEYBOARD HINT                              */
+        /* ========================================== */
+        .keyboard-hint {
+            margin-top: 8px;
+            font-size: 11px;
+            color: #6c757d;
+            display: flex;
+            gap: 12px;
+        }
+        
+        .keyboard-hint span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .keyboard-hint kbd {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            padding: 2px 5px;
+            font-size: 10px;
+            font-family: monospace;
+            color: #495057;
+        }
+        
+        /* ========================================== */
+        /* TABLE CONTAINER                            */
+        /* ========================================== */
+        #trend-table {
+            flex: 1;
+            background: white;
+        }
+        
+        /* ========================================== */
+        /* TABULATOR CUSTOMIZATION                    */
+        /* ========================================== */
+        .tabulator {
+            font-size: 13px;
+            border: none;
+            background: white;
+        }
+        
+        .tabulator-header {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .tabulator-header .tabulator-col {
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            padding: 8px;
+        }
+        
+        .tabulator-header .tabulator-col-title {
+            font-weight: 600;
+            color: #495057;
+            font-size: 13px;
+        }
+        
+        /* Header Filters */
+        .tabulator-header-filter {
+            margin-top: 5px;
+        }
+        
+        .tabulator-header-filter input,
+        .tabulator-header-filter select {
+            width: 100%;
+            padding: 5px 8px;
+            border: 1px solid #ced4da;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .tabulator-header-filter input:focus,
+        .tabulator-header-filter select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.15);
+        }
+        
+        /* Rows */
+        .tabulator-row {
+            border-bottom: 1px solid #f1f3f5;
+            min-height: 40px;
+        }
+        
+        .tabulator-row:hover {
+            background-color: #f8f9fa !important;
+        }
+        
+        .tabulator-row.tabulator-selected {
+            background-color: #e7f3ff !important;
+        }
+        
+        .tabulator-cell {
+            padding: 8px;
+            vertical-align: middle;
+        }
+        
+        /* ========================================== */
+        /* TOGGLE SWITCH (VISIBILITY COLUMN)         */
+        /* ========================================== */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #28a745;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* ========================================== */
+        /* COLOR PICKER                               */
+        /* ========================================== */
+        .color-picker-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+        
+        .color-preview {
+            width: 40px;
+            height: 24px;
+            border: 2px solid #dee2e6;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .color-preview:hover {
+            border-color: #667eea;
+            transform: scale(1.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .color-value {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #6c757d;
+        }
+        
+        /* ========================================== */
+        /* Y-AXIS BADGE STYLING                       */
+        /* ========================================== */
+        .yaxis-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 11px;
+            text-align: center;
+            min-width: 35px;
+        }
+        
+        .yaxis-badge.y1 {
+            background: #667eea;
+            color: white;
+        }
+        
+        .yaxis-badge.y2 {
+            background: #f093fb;
+            color: white;
+        }
+        
+        .yaxis-badge.y3 {
+            background: #4facfe;
+            color: white;
+        }
+        
+        /* Y-Axis Dropdown in Editor */
+        .tabulator-edit-select {
+            padding: 5px;
+            border: 2px solid #667eea;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        /* ========================================== */
+        /* HIDDEN FILE INPUT                          */
+        /* ========================================== */
+        #csv-file-input {
+            display: none;
+        }
+        
+        /* ========================================== */
+        /* PLACEHOLDER                                */
+        /* ========================================== */
+        .tabulator-placeholder {
+            padding: 40px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        /* ========================================== */
+        /* SCROLLBAR CUSTOMIZATION (Cross-browser)   */
+        /* ========================================== */
+        .autocomplete-dropdown {
+            scrollbar-width: thin;
+            scrollbar-color: #ced4da #f8f9fa;
+        }
+        
+        .autocomplete-dropdown::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .autocomplete-dropdown::-webkit-scrollbar-track {
+            background: #f8f9fa;
+        }
+        
+        .autocomplete-dropdown::-webkit-scrollbar-thumb {
+            background: #ced4da;
+            border-radius: 4px;
+        }
+        
+        .autocomplete-dropdown::-webkit-scrollbar-thumb:hover {
+            background: #667eea;
+        }
+        
+        .tabulator-tableHolder {
+            scrollbar-width: thin;
+            scrollbar-color: #ced4da #f8f9fa;
+        }
+        
+        .tabulator-tableHolder::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        .tabulator-tableHolder::-webkit-scrollbar-track {
+            background: #f8f9fa;
+        }
+        
+        .tabulator-tableHolder::-webkit-scrollbar-thumb {
+            background: #ced4da;
+            border-radius: 5px;
+        }
+        
+        .tabulator-tableHolder::-webkit-scrollbar-thumb:hover {
+            background: #667eea;
+        }
+        
+        /* ========================================== */
+        /* PRINT STYLES                               */
+        /* ========================================== */
+        @media print {
+            .toolbar,
+            .autocomplete-section {
+                display: none !important;
+            }
+            
+            #trend-table {
+                height: auto !important;
+            }
+            
+            .tabulator {
+                border: 1px solid #000;
+            }
+            
+            .tabulator-row {
+                page-break-inside: avoid;
+            }
+        }
+        
+        /* ========================================== */
+        /* 🌙 DARK MODE STYLES                       */
+        /* ========================================== */
+        body.dark-mode {
+            background: #1a1a1a !important;
+        }
+        
+        body.dark-mode #trend-config-container {
+            background: #1a1a1a;
+        }
+        
+        /* Loading Overlay Dark */
+        body.dark-mode .loading-overlay {
+            background: rgba(26, 26, 26, 0.95);
+        }
+        
+        body.dark-mode .loading-text {
+            color: #667eea;
+        }
+        
+        /* Toolbar Dark */
+        body.dark-mode .toolbar {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+        }
+        
+        /* Autocomplete Section Dark */
+        body.dark-mode .autocomplete-section {
+            background: #2d3748;
+            border-bottom: 2px solid #4a5568;
+        }
+        
+        body.dark-mode .autocomplete-header h3 {
+            color: #e2e8f0;
+        }
+        
+        body.dark-mode .autocomplete-input {
+            background: #1a202c;
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+        
+        body.dark-mode .autocomplete-input:focus {
+            background: #2d3748;
+            border-color: #667eea;
+        }
+        
+        body.dark-mode .autocomplete-input::placeholder {
+            color: #718096;
+        }
+        
+        body.dark-mode .autocomplete-icon {
+            color: #a0aec0;
+        }
+        
+        /* Autocomplete Dropdown Dark */
+        body.dark-mode .autocomplete-dropdown {
+            background: #2d3748;
+            border-color: #667eea;
+        }
+        
+        body.dark-mode .autocomplete-count {
+            background: #1a202c;
+            border-bottom-color: #4a5568;
+            color: #a0aec0;
+        }
+        
+        body.dark-mode .autocomplete-item {
+            border-bottom-color: #4a5568;
+        }
+        
+        body.dark-mode .autocomplete-item:hover,
+        body.dark-mode .autocomplete-item.selected {
+            background: #4a5568;
+        }
+        
+        body.dark-mode .autocomplete-item-tag {
+            color: #e2e8f0;
+        }
+        
+        body.dark-mode .autocomplete-no-results {
+            color: #a0aec0;
+        }
+        
+        /* Keyboard Hint Dark */
+        body.dark-mode .keyboard-hint {
+            color: #a0aec0;
+        }
+        
+        body.dark-mode .keyboard-hint kbd {
+            background: #1a202c;
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+        
+        /* Table Dark */
+        body.dark-mode #trend-table {
+            background: #2d3748;
+        }
+        
+        body.dark-mode .tabulator {
+            background: #2d3748;
+            color: #e2e8f0;
+        }
+        
+        body.dark-mode .tabulator-header {
+            background: #1a202c;
+            border-bottom-color: #4a5568;
+        }
+        
+        body.dark-mode .tabulator-header .tabulator-col {
+            background: #1a202c;
+            border-right-color: #4a5568;
+        }
+        
+        body.dark-mode .tabulator-header .tabulator-col-title {
+            color: #e2e8f0;
+        }
+        
+        body.dark-mode .tabulator-header-filter input,
+        body.dark-mode .tabulator-header-filter select {
+            background: #2d3748;
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+        
+        body.dark-mode .tabulator-row {
+            background: #2d3748;
+            border-bottom-color: #4a5568;
+        }
+        
+        body.dark-mode .tabulator-row:nth-child(even) {
+            background: #374151;
+        }
+        
+        body.dark-mode .tabulator-row:hover {
+            background-color: #4a5568 !important;
+        }
+        
+        body.dark-mode .tabulator-row.tabulator-selected {
+            background-color: #3b4f6e !important;
+        }
+        
+        body.dark-mode .tabulator-cell {
+            color: #e2e8f0;
+        }
+        
+        /* ========================================== */
+        /* Toggle Switch Dark Mode                    */
+        /* ========================================== */
+        body.dark-mode .toggle-slider {
+            background-color: #4a5568; /* Grigio scuro quando OFF */
+        }
+
+        body.dark-mode input:checked + .toggle-slider {
+            background-color: #28a745; /* VERDE quando ON (stesso del light mode) */
+        }
+        
+        /* Color Picker Dark */
+        body.dark-mode .color-preview {
+            border-color: #4a5568;
+        }
+        
+        body.dark-mode .color-value {
+            color: #a0aec0;
+        }
+        
+        /* Placeholder Dark */
+        body.dark-mode .tabulator-placeholder {
+            color: #a0aec0;
+        }
+        
+        /* Scrollbar Dark */
+        body.dark-mode .autocomplete-dropdown {
+            scrollbar-color: #4a5568 #1a202c;
+        }
+        
+        body.dark-mode .autocomplete-dropdown::-webkit-scrollbar-track {
+            background: #1a202c;
+        }
+        
+        body.dark-mode .autocomplete-dropdown::-webkit-scrollbar-thumb {
+            background: #4a5568;
+        }
+        
+        body.dark-mode .autocomplete-dropdown::-webkit-scrollbar-thumb:hover {
+            background: #667eea;
+        }
+        
+        body.dark-mode .tabulator-tableHolder {
+            scrollbar-color: #4a5568 #1a202c;
+        }
+        
+        body.dark-mode .tabulator-tableHolder::-webkit-scrollbar-track {
+            background: #1a202c;
+        }
+        
+        body.dark-mode .tabulator-tableHolder::-webkit-scrollbar-thumb {
+            background: #4a5568;
+        }
+        
+        body.dark-mode .tabulator-tableHolder::-webkit-scrollbar-thumb:hover {
+            background: #667eea;
+        }
+        
+        /* Stats Dark */
+        body.dark-mode .toolbar .stats {
+            background: rgba(0, 0, 0, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ✅ LOADING OVERLAY -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Caricamento Trend Configuration...</div>
+    </div>
+
+    <div id="trend-config-container">
+        
+        <!-- ✅ AUTOCOMPLETE SECTION - SOPRA -->
+        <div class="autocomplete-section">
+            <div class="autocomplete-container">
+                <span class="autocomplete-icon">🔍</span>
+                <input type="text" 
+                       id="autocomplete-input" 
+                       class="autocomplete-input"
+                       placeholder="Per aggiungere un nuovo Trend, inizia a digitare il nome del tag..."
+                       autocomplete="off"
+                       spellcheck="false"
+                       tabindex="1">
+                <button class="autocomplete-clear" 
+                        id="autocomplete-clear"
+                        tabindex="2"
+                        aria-label="Cancella ricerca">✕</button>
+                
+                <div class="autocomplete-dropdown" id="autocomplete-dropdown">
+                    <div class="autocomplete-count" id="autocomplete-count"></div>
+                    <div id="autocomplete-list"></div>
+                </div>
+            </div>
+            
+            <div class="keyboard-hint">
+                <span><kbd>↑</kbd> <kbd>↓</kbd> Naviga</span>
+                <span><kbd>Enter</kbd> Seleziona</span>
+                <span><kbd>Esc</kbd> Chiudi</span>
+            </div>
+        </div>
+        
+        <!-- ✅ TABLE - CENTRO -->
+        <div id="trend-table"></div>
+        
+        <!-- ✅ TOOLBAR - SOTTO -->
+        <div class="toolbar">
+            <button class="btn-delete" 
+                    onclick="removeSelectedTrends()"
+                    tabindex="3"
+                    aria-label="Rimuovi trend selezionati">
+                🗑️ Rimuovi Selezionati
+            </button>
+            <button class="btn-clear" 
+                    onclick="clearAllTrends()"
+                    tabindex="4"
+                    aria-label="Cancella tutti i trend">
+                🧹 Cancella Tutto
+            </button>
+            <button class="btn-import" 
+                    onclick="importCSV()"
+                    tabindex="5"
+                    aria-label="Importa configurazione da CSV">
+                📥 Importa Configurazione
+            </button>
+            <button class="btn-export" 
+                    onclick="exportCSV()"
+                    tabindex="6"
+                    aria-label="Esporta configurazione in CSV">
+                💾 Salva Configurazione
+            </button>
+            
+            <div class="spacer"></div>
+            
+            <div class="stats">
+                Variabili: <strong id="available-count">0</strong> | 
+                Trends: <strong id="trend-count">0</strong> | 
+                Visibili: <strong id="visible-count">0</strong>
+            </div>
+        </div>
+        
+        <!-- Hidden file input for CSV import -->
+        <input type="file" id="csv-file-input" accept=".csv" onchange="handleCSVImport(event)">
+    </div>
+    
+    <!-- ========================================== -->
+    <!-- WebCC Library (MUST be loaded FIRST)      -->
+    <!-- ========================================== -->
+    <script src="./webcc.min.js"></script>
+    
+    <!-- ========================================== -->
+    <!-- Tabulator Library - LOCALE                 -->
+    <!-- ========================================== -->
+    <script src="./dist/js/tabulator.min.js"></script>
+    
+    <!-- ========================================== -->
+    <!-- Custom Code (MUST be loaded LAST)         -->
+    <!-- ========================================== -->
+    <script src="./code.js"></script>
+</body>
+</html>

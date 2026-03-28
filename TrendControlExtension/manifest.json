@@ -1,0 +1,94 @@
+{
+  "$schema": "./CWC_manifest_Schema.json",
+  "mver": "1.2.0",
+  "control": {
+    "identity": {
+      "name": "TrendConfigTable",
+      "version": "8.3.0",
+      "displayname": "Trend Configuration Table",
+      "icon": "./assets/trend-icon.ico",
+      "type": "guid://2f40abdc-3270-43d4-a238-f86fb56ffd0e",
+      "start": "./control/index.html"
+    },
+    "metadata": {
+      "author": "WD TSP PORT RM",
+      "keywords": [
+        "trend",
+        "configuration",
+        "table",
+        "archive",
+        "tabulator",
+        "autocomplete",
+        "csv",
+        "persistence",
+        "dark-mode"
+      ]
+    },
+    "contracts": {
+      "api": {
+        "methods": {},
+        "events": {
+          "ConfigurationChanged": {
+            "arguments": {
+              "configData": {
+                "type": "string",
+                "description": "Complete trend configuration as JSON string array. Format: [{tagName, visible, color, yAxis}, ...]"
+              }
+            },
+            "description": "Fired whenever the trend configuration changes (variable added, removed, or visibility toggled)"
+          },
+          "VariableAdded": {
+            "arguments": {
+              "variableData": {
+                "type": "string",
+                "description": "Added variable data as JSON string object. Format: {tagName, visible, color, yAxis}"
+              }
+            },
+            "description": "Fired when a single variable is added to the trend configuration"
+          },
+          "VariableRemoved": {
+            "arguments": {
+              "variableData": {
+                "type": "string",
+                "description": "Removed variable data as JSON string object. Format: {tagName, visible, color, yAxis}"
+              }
+            },
+            "description": "Fired when a single variable is removed from the trend configuration"
+          },
+          "VisibilityChanged": {
+            "arguments": {
+              "visibilityData": {
+                "type": "string",
+                "description": "Visibility change data as JSON string object. Format: {tagName, visible}"
+              }
+            },
+            "description": "Fired when a variable's visibility toggle is changed"
+          }
+        },
+        "properties": {
+          "AvailableVariablesString": {
+            "type": "string",
+            "default": "[]",
+            "description": "JSON string array containing available variables for trend configuration. Format: [{tagName}, ...]"
+          },
+          "SavedConfiguration": {
+            "type": "string",
+            "default": "[]",
+            "description": "JSON string array containing the saved trend configuration loaded from file. Format: [{tagName, visible, color, yAxis}, ...]"
+          },
+          "CSVFilename": {
+            "type": "string",
+            "default": "TrendConfig",
+            "description": "Nome del file CSV/JSON da esportare/importare (senza estensione)"
+          },
+          "DarkMode": {
+            "type": "boolean",
+            "default": false,
+            "description": "Attiva/disattiva la modalità Dark Mode"
+          }
+        }
+      }
+    },
+    "types": {}
+  }
+}
